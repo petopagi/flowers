@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Flower Gift</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lighting
+        const light = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(light);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(0, 1, 1);
+        scene.add(directionalLight);
+
+        // Flower parameters
+        const flowers = [];
+        const flowerColors = {
+            rose: [0xff0000, 0xff69b4, 0xffffff],
+            tulip: [0xffa500, 0xffff00, 0xff1493]
+        };
+
+        // Create flower geometry
+        function createFlower(type) {
+            const group = new THREE.Group();
+            
+            // Stem
+            const stemGeometry = new THREE.CylinderGeometry(0.1, 0.1, 2, 8);
+            const stemMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+            const stem = new THREE.Mesh(stemGeometry, stemMaterial);
+            group.add(stem);
+
+            // Flower head
+            const petalGeometry = new THREE.SphereGeometry(0.3, 8, 8);
+            const color = flowerColors[type][Math.floor(Math.random() * flowerColors[type].length)];
+            const petalMaterial = new THREE.MeshPhongMaterial({ color: color });
+
+            if (type === 'rose') {
+                // Rose with multiple layers
+                for(let i = 0; i < 5; i++) {
+                    const petal = new THREE.Mesh(petalGeometry, petalMaterial);
+                    petal.position.y = 1 + i * 0.1;
+                    petal.rotation.x = Math.PI/2;
+                    petal.scale.set(1, 0.5 + i*0.1, 1);
+                    group.add(petal);
+                }
+            } else {
+                // Tulip shape
+                const flowerGeometry = new THREE.ConeGeometry(0.5, 1, 8);
+                const flower = new THREE.Mesh(flowerGeometry, petalMaterial);
+                flower.position.y = 1.5;
+                flower.rotation.x = Math.PI;
+                group.add(flower);
+            }
+
+            return group;
+        }
+
+        // Create multiple flowers
+        function createFlowers() {
+            for(let i = 0; i < 20; i++) {
+                const type = Math.random() > 0.5 ? 'rose' : 'tulip';
+                const flower = createFlower(type);
+                flower.position.x = (Math.random() - 0.5) * 10;
+                flower.position.z = (Math.random() - 0.5) * 10;
+                flower.position.y = -10;
+                flowers.push({
+                    mesh: flower,
+                    speed: Math.random() * 0.05 + 0.02
+                });
+                scene.add(flower);
+            }
+        }
+
+        // Animation
+        camera.position.z = 5;
+        camera.position.y = 2;
+        camera.lookAt(0, 0, 0);
+
+        createFlowers();
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            flowers.forEach(flower => {
+                flower.mesh.position.y += flower.speed;
+                flower.mesh.rotation.y += 0.01;
+                
+                // Reset position when reaching top
+                if(flower.mesh.position.y > 10) {
+                    flower.mesh.position.y = -10;
+                    flower.mesh.position.x = (Math.random() - 0.5) * 10;
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
